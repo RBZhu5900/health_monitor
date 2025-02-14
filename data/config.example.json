@@ -3,13 +3,13 @@
   "password": "your_password",
   "deepseek": {
     "api_key": "your_deepseek_api_key",
-    "base_url": "https://xiaoai.plus/v1",
-    "model": "deepseek-r1-2025-01-20"
+    "base_url": "your_deepseek_api_base_url",
+    "model": "your_deepseek_model"
   },
   "smtp": {
-    "server": "smtp.gmail.com",
+    "server": "smtp.example.com",
     "port": 587,
-    "sender_email": "your_email@gmail.com",
+    "sender_email": "your_email@example.com",
     "sender_password": "your_app_password"
   },
   "receiver_email": "target@example.com",
