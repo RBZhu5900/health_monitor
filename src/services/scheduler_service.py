@@ -8,42 +8,43 @@ import json
 
 class SchedulerService:
     def __init__(self, task_function):
+        """Initialize scheduler"""
         self.logger = logging.getLogger(self.__class__.__name__)
         self.scheduler = BackgroundScheduler()
         self.task_function = task_function
         self.email_service = EmailService()
         
     def start(self):
-        """启动调度器"""
+        """Start scheduler"""
         try:
-            # 添加健康监控任务，每天凌晨3点执行
+            # Add health monitoring task, execute at 3 AM daily
             self.scheduler.add_job(
                 self.task_function,
                 trigger=CronTrigger(hour=3, minute=0),
                 id='health_monitor_task',
-                name='健康监控任务',
+                name='Health Monitoring Task',
                 replace_existing=True
             )
             
-            # 添加每日总结邮件任务，每天早上8点执行
+            # Add daily summary email task, execute at 8 AM daily
             self.scheduler.add_job(
                 self._send_daily_summary,
                 trigger=CronTrigger(hour=8, minute=0),
                 id='daily_summary_task',
-                name='每日总结任务',
+                name='Daily Summary Task',
                 replace_existing=True
             )
             
-            # 启动调度器
+            # Start scheduler
             self.scheduler.start()
-            self.logger.info("调度器已启动")
+            self.logger.info("Scheduler started")
             
         except Exception as e:
-            self.logger.error(f"启动调度器失败: {str(e)}")
+            self.logger.error(f"Failed to start scheduler: {str(e)}")
             raise
             
     def add_notification_jobs(self, notifications):
-        """添加提醒邮件任务"""
+        """Add notification email tasks"""
         try:
             for notification in notifications:
                 time = notification["time"]
@@ -55,20 +56,20 @@ class SchedulerService:
                     trigger=CronTrigger(hour=hour, minute=minute),
                     args=[time, message],
                     id=f'notification_{time.replace(":", "_")}',
-                    name=f'提醒任务 {time}',
+                    name=f'Notification Task {time}',
                     replace_existing=True
                 )
                 
-            self.logger.info(f"已添加 {len(notifications)} 个提醒任务")
+            self.logger.info(f"Added {len(notifications)} notification tasks")
             
         except Exception as e:
-            self.logger.error(f"添加提醒任务失败: {str(e)}")
+            self.logger.error(f"Failed to add notification tasks: {str(e)}")
             raise
             
     def _send_daily_summary(self):
-        """发送每日总结"""
+        """Send daily summary"""
         try:
-            # 读取最新的建议数据
+            # Read the latest advice data
             data_dir = Path("data_export/advice")
             if not data_dir.exists():
                 return
@@ -85,13 +86,13 @@ class SchedulerService:
             self.email_service.send_daily_summary(advice_data)
             
         except Exception as e:
-            self.logger.error(f"发送每日总结失败: {str(e)}")
+            self.logger.error(f"Failed to send daily summary: {str(e)}")
             
     def stop(self):
-        """停止调度器"""
+        """Stop scheduler"""
         try:
             self.scheduler.shutdown()
-            self.logger.info("调度器已停止")
+            self.logger.info("Scheduler stopped")
         except Exception as e:
-            self.logger.error(f"停止调度器失败: {str(e)}")
+            self.logger.error(f"Failed to stop scheduler: {str(e)}")
             raise 

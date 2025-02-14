@@ -25,8 +25,8 @@ class MiSportService:
             raise RuntimeError("Failed to load configuration")
 
     def _get_code(self):
-        """获取access code"""
-        self.logger.info("1. 获取access code")
+        """Get access code"""
+        self.logger.info("1. Getting access code")
         
         headers = {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -43,43 +43,43 @@ class MiSportService:
         url = f"https://api-user.huami.com/registrations/+86{self.username}/tokens"
         
         try:
-            # 不需要先GET请求，直接发送POST请求
+            # No need for GET request first, directly send POST request
             response = self.session.post(
                 url,
                 headers=headers,
                 data=data,
-                allow_redirects=False  # 不自动跟随重定向
+                allow_redirects=False  # Don't follow redirects automatically
             )
             
-            self.logger.debug(f"响应状态码: {response.status_code}")
-            self.logger.debug(f"响应Headers: {dict(response.headers)}")
-            self.logger.debug(f"响应内容: {response.text[:500]}")
+            self.logger.debug(f"Response status code: {response.status_code}")
+            self.logger.debug(f"Response Headers: {dict(response.headers)}")
+            self.logger.debug(f"Response content: {response.text[:500]}")
             
-            # 检查状态码是否为302或303（重定向状态码）
+            # Check if status code is 302 or 303 (redirect status codes)
             if response.status_code not in [302, 303]:
-                self.logger.error(f"获取code失败，状态码: {response.status_code}")
-                self.logger.error(f"响应内容: {response.text}")
-                raise Exception(f"获取code失败，状态码: {response.status_code}")
+                self.logger.error(f"Failed to get code, status code: {response.status_code}")
+                self.logger.error(f"Response content: {response.text}")
+                raise Exception(f"Failed to get code, status code: {response.status_code}")
             
             location = response.headers.get("Location", "")
             self.logger.debug(f"Location header: {location}")
             
             if "access=" not in location:
-                self.logger.error("Location header中未找到access code")
-                raise Exception("未找到access code")
+                self.logger.error("Access code not found in Location header")
+                raise Exception("Access code not found")
             
-            # 提取access参数
+            # Extract access parameter
             access_param = location.split("access=")[1].split("&")[0]
-            self.logger.info(f"获取到code: {access_param}")
+            self.logger.info(f"Got code: {access_param}")
             return access_param
             
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"请求异常: {str(e)}")
-            raise Exception(f"请求异常: {str(e)}")
+            self.logger.error(f"Request error: {str(e)}")
+            raise Exception(f"Request error: {str(e)}")
 
     def _login(self, code):
-        """执行登录"""
-        self.logger.info("2. 执行登录")
+        """Perform login"""
+        self.logger.info("2. Performing login")
         
         headers = {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -104,19 +104,19 @@ class MiSportService:
                 data=data
             )
             
-            self.logger.debug(f"登录响应状态码: {response.status_code}")
-            self.logger.debug(f"完整的登录响应: {response.text}")
+            self.logger.debug(f"Login response status code: {response.status_code}")
+            self.logger.debug(f"Complete login response: {response.text}")
             
             login_data = response.json()
             
-            # token_info 已经是一个字典，不需要额外的字符串处理
+            # token_info is already a dictionary, no extra string processing needed
             token_info = login_data.get("token_info")
             
             if not token_info:
-                self.logger.error("登录响应中未找到token_info")
-                raise Exception("获取login_token失败, 请检查账户名或密码是否正确")
+                self.logger.error("token_info not found in login response")
+                raise Exception("Failed to get login_token, please check username and password")
             
-            self.logger.info(f"login_token: {token_info.get('login_token')}")
+            self.logger.info(f"Got login_token: {token_info.get('login_token')}")
             
             return [
                 str(token_info.get("user_id")),
@@ -125,20 +125,20 @@ class MiSportService:
             ]
             
         except Exception as e:
-            self.logger.error(f"登录请求失败: {str(e)}")
-            raise Exception(f"登录失败: {str(e)}")
+            self.logger.error(f"Login request failed: {str(e)}")
+            raise Exception(f"Login failed: {str(e)}")
 
     def get_health_data(self) -> dict:
-        """获取健康数据"""
+        """Get health data"""
         try:
-            # 1. 获取access code
+            # 1. Get access code
             code = self._get_code()
             
-            # 2. 登录获取token
+            # 2. Get access token
             login_res = self._login(code)
             user_id, login_token, app_token = login_res
             
-            # 3. 获取数据
+            # 3. Get activity data
             end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
             
@@ -162,21 +162,21 @@ class MiSportService:
             
             data = response.json()
             
-            # 保存原始响应
+            # Save raw response
             self._save_raw_response(response, start_date, end_date)
             
-            # 处理数据
+            # Process data
             self._process_data(data)
             
             return data
             
         except Exception as e:
-            self.logger.error(f"获取健康数据失败: {str(e)}")
+            self.logger.error(f"Failed to get health data: {str(e)}")
             raise
 
     def _save_raw_response(self, response, start_date, end_date):
-        """保存详细的健康数据"""
-        # 清理旧文件
+        """Save detailed health data"""
+        # Clean up old files
         data_dir = Path("data_export")
         data_dir.mkdir(exist_ok=True)
         for old_file in data_dir.glob("api_response_*.txt"):
@@ -190,97 +190,97 @@ class MiSportService:
                 return
                 
             with open(filename, 'w', encoding='utf-8') as f:
-                f.write(f"=== 小米运动健康数据 ===\n")
-                f.write(f"统计周期: {start_date} 至 {end_date}\n")
-                f.write(f"响应状态: {data.get('code')} - {data.get('message')}\n\n")
+                f.write(f"=== Zepp Health Data ===\n")
+                f.write(f"Statistics Period: {start_date} to {end_date}\n")
+                f.write(f"Response Status: {data.get('code')} - {data.get('message')}\n\n")
                 
                 for item in data["data"]:
-                    f.write(f"日期: {item['date_time']}\n")
+                    f.write(f"Date: {item['date_time']}\n")
                     f.write("-" * 50 + "\n")
-                    f.write(f"用户ID: {item['uid']}\n")
-                    f.write(f"数据类型: {item['data_type']}\n")
-                    f.write(f"数据来源: {item['source']}\n")
-                    f.write(f"设备ID: {item['device_id']}\n")
+                    f.write(f"User ID: {item['uid']}\n")
+                    f.write(f"Data Type: {item['data_type']}\n")
+                    f.write(f"Data Source: {item['source']}\n")
+                    f.write(f"Device ID: {item['device_id']}\n")
                     f.write(f"UUID: {item['uuid']}\n\n")
                     
                     try:
                         summary = base64.b64decode(item["summary"]).decode('utf-8')
                         summary_json = json.loads(summary)
                         
-                        f.write("数据版本: v" + str(summary_json.get('v', '未知')) + "\n\n")
+                        f.write("Data Version: v" + str(summary_json.get('v', 'Unknown')) + "\n\n")
                         
-                        # 睡眠数据详情
+                        # Sleep data details
                         if "slp" in summary_json:
                             slp = summary_json["slp"]
-                            f.write("睡眠数据详情:\n")
-                            f.write(f"  开始时间戳: {slp.get('st')} ({datetime.fromtimestamp(slp.get('st', 0)).strftime('%Y-%m-%d %H:%M:%S')})\n")
-                            f.write(f"  结束时间戳: {slp.get('ed')} ({datetime.fromtimestamp(slp.get('ed', 0)).strftime('%Y-%m-%d %H:%M:%S')})\n")
-                            f.write(f"  深睡时长: {slp.get('dp')} 分钟\n")
-                            f.write(f"  浅睡时长: {slp.get('lt')} 分钟\n")
-                            f.write(f"  清醒次数: {slp.get('wk')} 次\n")
-                            f.write(f"  用户设置开始时间: {slp.get('usrSt')} 分钟\n")
-                            f.write(f"  用户设置结束时间: {slp.get('usrEd')} 分钟\n")
-                            f.write(f"  清醒持续: {slp.get('wc')} 分钟\n")
-                            f.write(f"  入睡状态: {slp.get('is')}\n")
-                            f.write(f"  睡眠评分: {slp.get('lb')}\n")
-                            f.write(f"  睡眠目标: {slp.get('to')} 分钟\n")
-                            f.write(f"  睡眠偏差: {slp.get('dt')} 分钟\n")
-                            f.write(f"  静息心率: {slp.get('rhr')} bpm\n")
-                            f.write(f"  睡眠得分: {slp.get('ss')}\n\n")
+                            f.write("Sleep Data Details:\n")
+                            f.write(f"  Start Timestamp: {slp.get('st')}\n")
+                            f.write(f"  End Timestamp: {slp.get('ed')}\n")
+                            f.write(f"  Deep Sleep Duration: {slp.get('dp')} minutes\n")
+                            f.write(f"  Light Sleep Duration: {slp.get('lt')} minutes\n")
+                            f.write(f"  Wake Count: {slp.get('wk')} times\n")
+                            f.write(f"  User Set Start Time: {slp.get('usrSt')} minutes\n")
+                            f.write(f"  User Set End Time: {slp.get('usrEd')} minutes\n")
+                            f.write(f"  Wake Duration: {slp.get('wc')} minutes\n")
+                            f.write(f"  Sleep State: {slp.get('is')}\n")
+                            f.write(f"  Sleep Score: {slp.get('lb')}\n")
+                            f.write(f"  Sleep Goal: {slp.get('to')} minutes\n")
+                            f.write(f"  Sleep Deviation: {slp.get('dt')} minutes\n")
+                            f.write(f"  Resting Heart Rate: {slp.get('rhr')} bpm\n")
+                            f.write(f"  Sleep Score: {slp.get('ss')}\n\n")
                         
-                        # 步数数据详情
+                        # Step data details
                         if "stp" in summary_json:
                             stp = summary_json["stp"]
-                            f.write("步数数据详情:\n")
-                            f.write(f"  总步数: {stp.get('ttl', 0):,} 步\n")
-                            f.write(f"  总距离: {stp.get('dis', 0):,} 米\n")
-                            f.write(f"  消耗卡路里: {stp.get('cal', 0):,} 千卡\n")
-                            f.write(f"  步行时间: {stp.get('wk', 0)} 分钟\n")
-                            f.write(f"  跑步次数: {stp.get('rn', 0)} 次\n")
-                            f.write(f"  跑步距离: {stp.get('runDist', 0):,} 米\n")
-                            f.write(f"  跑步消耗: {stp.get('runCal', 0):,} 千卡\n\n")
+                            f.write("Step Data Details:\n")
+                            f.write(f"  Total Steps: {stp.get('ttl', 0):,} steps\n")
+                            f.write(f"  Total Distance: {stp.get('dis', 0):,} meters\n")
+                            f.write(f"  Calories Burned: {stp.get('cal', 0):,} kcal\n")
+                            f.write(f"  Walking Duration: {stp.get('wk', 0)} minutes\n")
+                            f.write(f"  Running Count: {stp.get('rn', 0)} times\n")
+                            f.write(f"  Running Distance: {stp.get('runDist', 0):,} meters\n")
+                            f.write(f"  Running Calories: {stp.get('runCal', 0):,} kcal\n\n")
                             
-                            # 运动阶段详情
+                            # Activity stage details
                             if "stage" in stp:
-                                f.write("运动阶段详情:\n")
+                                f.write("Activity Stage Details:\n")
                                 for i, stage in enumerate(stp["stage"], 1):
-                                    f.write(f"  阶段 {i}:\n")
-                                    f.write(f"    开始时间点: {stage.get('start')} 分钟\n")
-                                    f.write(f"    结束时间点: {stage.get('stop')} 分钟\n")
-                                    f.write(f"    运动模式: {self._get_mode_description(stage.get('mode'))}\n")
-                                    f.write(f"    距离: {stage.get('dis', 0):,} 米\n")
-                                    f.write(f"    消耗: {stage.get('cal', 0)} 千卡\n")
-                                    f.write(f"    步数: {stage.get('step', 0):,} 步\n\n")
+                                    f.write(f"  Stage {i}:\n")
+                                    f.write(f"    Start Time: {stage.get('start')} minutes\n")
+                                    f.write(f"    End Time: {stage.get('stop')} minutes\n")
+                                    f.write(f"    Activity Mode: {self._get_mode_description(stage.get('mode'))}\n")
+                                    f.write(f"    Distance: {stage.get('dis', 0):,} meters\n")
+                                    f.write(f"    Calories: {stage.get('cal', 0)} kcal\n")
+                                    f.write(f"    Steps: {stage.get('step', 0):,} steps\n\n")
                         
-                        # 其他数据
-                        f.write("其他数据:\n")
-                        f.write(f"  目标步数: {summary_json.get('goal', 0):,} 步\n")
-                        f.write(f"  时区: {summary_json.get('tz')} 秒\n")
-                        f.write(f"  数据长度: {summary_json.get('byteLength')} 字节\n")
-                        f.write(f"  同步时间戳: {summary_json.get('sync')} ({datetime.fromtimestamp(summary_json.get('sync', 0)/1000).strftime('%Y-%m-%d %H:%M:%S')})\n")
+                        # Other data
+                        f.write("Other Data:\n")
+                        f.write(f"  Step Goal: {summary_json.get('goal', 0):,} steps\n")
+                        f.write(f"  Timezone: {summary_json.get('tz')} seconds\n")
+                        f.write(f"  Data Length: {summary_json.get('byteLength')} bytes\n")
+                        f.write(f"  Sync Timestamp: {summary_json.get('sync')} ({datetime.fromtimestamp(summary_json.get('sync', 0)/1000).strftime('%Y-%m-%d %H:%M:%S')})\n")
                         
                         f.write("\n" + "=" * 50 + "\n\n")
                         
                     except Exception as e:
-                        f.write(f"数据解析错误: {str(e)}\n\n")
+                        f.write(f"Data parsing error: {str(e)}\n\n")
                 
-            self.logger.info(f"详细健康数据报告已保存至：{filename}")
+            self.logger.info(f"Detailed health data report saved to: {filename}")
             
         except Exception as e:
-            self.logger.error(f"保存数据失败: {str(e)}")
+            self.logger.error(f"Failed to save data: {str(e)}")
 
     def _get_mode_description(self, mode):
-        """获取运动模式描述"""
+        """Get activity mode description"""
         modes = {
-            1: "步行",
-            3: "快走",
-            4: "跑步",
-            5: "骑行"
+            1: "Walking",
+            3: "Fast Walking",
+            4: "Running",
+            5: "Cycling"
         }
-        return modes.get(mode, f"未知模式({mode})")
+        return modes.get(mode, f"Unknown mode({mode})")
 
     def _process_data(self, data):
-        """处理数据"""
+        """Process data"""
         if not data.get("data"):
             return
             
@@ -303,7 +303,7 @@ class MiSportService:
                     slp = summary_json["slp"]
                     item["deep_sleep"] = slp.get("dp", 0)
                     item["light_sleep"] = slp.get("lt", 0)
-                    
+                
             except Exception as e:
-                self.logger.error(f"处理数据失败: {str(e)}")
+                self.logger.error(f"Failed to process data: {str(e)}")
                 item["parse_error"] = str(e) 

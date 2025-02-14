@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小米运动健康监控</title>
+    <title>Health Monitor</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -84,44 +84,44 @@
 <body>
     <div class="container">
         <div class="section">
-            <h2 class="section-title">账号设置</h2>
+            <h2 class="section-title">Account Settings</h2>
             {% if error %}
             <div class="error">{{ error }}</div>
             {% endif %}
             <div class="form-group">
-                <label for="username">账号:</label>
+                <label for="username">Account:</label>
                 <input type="text" id="username" value="{{ username }}" readonly>
             </div>
             <div class="form-group">
-                <label for="password">密码:</label>
+                <label for="password">Password:</label>
                 <input type="password" id="password" value="{{ password }}" readonly>
             </div>
-            <button id="editBtn" onclick="toggleEdit()">修改</button>
-            <button id="saveBtn" onclick="saveCredentials()" class="hidden">保存</button>
-            <button id="cancelBtn" onclick="cancelEdit()" class="hidden">取消</button>
+            <button id="editBtn" onclick="toggleEdit()">Edit</button>
+            <button id="saveBtn" onclick="saveCredentials()" class="hidden">Save</button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="hidden">Cancel</button>
         </div>
         
         <div class="section">
-            <h2 class="section-title">邮箱设置</h2>
+            <h2 class="section-title">Email Settings</h2>
             <div class="form-group">
-                <label for="receiverEmail">接收邮箱:</label>
+                <label for="receiverEmail">Receiver Email:</label>
                 <input type="email" id="receiverEmail" value="{{ receiver_email }}" readonly>
             </div>
-            <button id="editEmailBtn" onclick="toggleEmailEdit()">修改</button>
-            <button id="saveEmailBtn" onclick="saveEmail()" class="hidden">保存</button>
-            <button id="cancelEmailBtn" onclick="cancelEmailEdit()" class="hidden">取消</button>
+            <button id="editEmailBtn" onclick="toggleEmailEdit()">Edit</button>
+            <button id="saveEmailBtn" onclick="saveEmail()" class="hidden">Save</button>
+            <button id="cancelEmailBtn" onclick="cancelEmailEdit()" class="hidden">Cancel</button>
         </div>
         
         <div class="section">
-            <h2 class="section-title">健康数据</h2>
+            <h2 class="section-title">Health Data</h2>
             <div class="button-group">
-                <button onclick="getHealthData()">获取健康数据</button>
-                <button onclick="downloadReport()">下载报告</button>
+                <button onclick="getHealthData()">Get Health Data</button>
+                <button onclick="downloadReport()">Download Report</button>
             </div>
         </div>
         
         <div id="message" class="hidden"></div>
-        <div id="loading" class="loading hidden">正在处理中...</div>
+        <div id="loading" class="loading hidden">Processing...</div>
     </div>
 
     <script>
@@ -154,7 +154,7 @@
             const password = document.getElementById('password').value;
             
             if (!username || !password) {
-                showMessage('用户名和密码不能为空', 'error');
+                showMessage('Username and password cannot be empty', 'error');
                 return;
             }
             
@@ -185,14 +185,14 @@
                 }
             })
             .catch(error => {
-                showMessage('保存失败: ' + error, 'error');
+                showMessage('Save failed: ' + error, 'error');
             });
         }
         
         function getHealthData() {
             const loadingDiv = document.getElementById('loading');
             loadingDiv.classList.remove('hidden');
-            showMessage('正在获取健康数据...', 'loading');
+            showMessage('Retrieving health data...', 'loading');
             
             fetch('/get_health_data')
                 .then(response => response.json())
@@ -201,17 +201,17 @@
                     if (data.success === false) {
                         showMessage(data.message, 'error');
                     } else {
-                        showMessage('健康数据获取成功！', 'success');
+                        showMessage('Health data retrieved successfully!', 'success');
                     }
                 })
                 .catch(error => {
                     loadingDiv.classList.add('hidden');
-                    showMessage('获取数据失败: ' + error, 'error');
+                    showMessage('Failed to get data: ' + error, 'error');
                 });
         }
         
         function downloadReport() {
-            console.log('开始下载报告...');
+            console.log('Starting download...');
             // 创建一个隐藏的 iframe 来处理下载
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
@@ -223,7 +223,7 @@
                 document.body.removeChild(iframe);
             }, 3000);
             
-            showMessage('报告下载成功！', 'success');
+            showMessage('Report downloaded successfully!', 'success');
         }
         
         function showMessage(message, type) {
@@ -258,14 +258,14 @@
             const email = document.getElementById('receiverEmail').value;
             
             if (!email) {
-                showMessage('邮箱不能为空', 'error');
+                showMessage('Email cannot be empty', 'error');
                 return;
             }
             
             // 简单的邮箱格式验证
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showMessage('请输入有效的邮箱地址', 'error');
+                showMessage('Please enter a valid email address', 'error');
                 return;
             }
             
@@ -292,7 +292,7 @@
                 }
             })
             .catch(error => {
-                showMessage('保存失败: ' + error, 'error');
+                showMessage('Save failed: ' + error, 'error');
             });
         }
     </script>

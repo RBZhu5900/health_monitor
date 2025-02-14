@@ -13,7 +13,7 @@ class EmailService:
         self._load_config()
         
     def _load_config(self):
-        """加载邮件配置"""
+        """Load email configuration"""
         try:
             with open(self.config_path, 'r') as f:
                 config = json.load(f)
@@ -26,46 +26,50 @@ class EmailService:
                 
                 if not all([self.smtp_server, self.sender_email, 
                            self.sender_password, self.receiver_email]):
-                    raise ValueError("邮箱配置不完整")
+                    raise ValueError("Missing required email configuration")
                     
         except Exception as e:
-            self.logger.error(f"加载邮件配置失败: {str(e)}")
+            self.logger.error(f"Failed to load email configuration: {str(e)}")
             raise
             
     def send_notification(self, time, message):
-        """发送提醒邮件"""
-        subject = f"[健康提醒] {time} 的健康建议"
+        """Send notification email"""
+        subject = f"Health Reminder: {time} Health Advice"
         self._send_email(subject, message)
         
     def send_daily_summary(self, advice_data):
-        """发送每日总结"""
+        """Send daily summary"""
         try:
-            subject = f"[健康报告] {datetime.now().strftime('%Y-%m-%d')} 健康数据总结"
+            subject = f"Health Report: {datetime.now().strftime('%Y-%m-%d')} Health Data Summary"
             
-            # 构建邮件内容
-            content = "=== 每日健康报告 ===\n\n"
+            # Build email content
+            content = "Daily Health Report\n"
+            content += "==================\n\n"
             
-            content += "【每日总结】\n"
+            content += "Daily Summary\n"
+            content += "------------\n"
             content += advice_data["daily_summary"]
             content += "\n\n"
             
-            content += "【改进建议】\n"
+            content += "Improvement Suggestions\n"
+            content += "----------------------\n"
             for suggestion in advice_data["improvement_suggestions"]:
                 content += f"- {suggestion}\n"
             content += "\n"
             
-            content += "【今日成就】\n"
+            content += "Today's Achievements\n"
+            content += "-------------------\n"
             for achievement in advice_data["achievements"]:
                 content += f"- {achievement}\n"
                 
             self._send_email(subject, content)
             
         except Exception as e:
-            self.logger.error(f"发送每日总结失败: {str(e)}")
+            self.logger.error(f"Failed to send daily summary: {str(e)}")
             raise
             
     def _send_email(self, subject, content):
-        """发送邮件"""
+        """Send email"""
         try:
             msg = MIMEMultipart()
             msg['From'] = self.sender_email
@@ -79,8 +83,8 @@ class EmailService:
                 server.login(self.sender_email, self.sender_password)
                 server.send_message(msg)
                 
-            self.logger.info(f"邮件发送成功: {subject}")
+            self.logger.info(f"Email sent successfully: {subject}")
             
         except Exception as e:
-            self.logger.error(f"发送邮件失败: {str(e)}")
+            self.logger.error(f"Failed to send email: {str(e)}")
             raise 

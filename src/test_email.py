@@ -15,7 +15,7 @@ def setup_logging():
     )
 
 def get_latest_advice():
-    """获取最新的健康建议"""
+    """Get the latest health advice"""
     try:
         data_dir = Path("data_export/advice")
         if not data_dir.exists():
@@ -30,39 +30,39 @@ def get_latest_advice():
         with open(latest_file, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        logging.error(f"读取健康建议失败: {str(e)}")
+        logging.error(f"Failed to read health advice: {str(e)}")
         return None
 
 def test_email_service():
-    """测试邮件服务"""
+    """Test email service"""
     setup_logging()
     logger = logging.getLogger(__name__)
     
     try:
-        logger.info("开始测试邮件服务")
+        logger.info("Starting email service test")
         
-        # 创建邮件服务实例
+        # Create email service instance
         email_service = EmailService()
         
-        # 测试发送简单通知
-        logger.info("测试发送通知邮件...")
+        # Test sending simple notification
+        logger.info("Testing notification email...")
         email_service.send_notification(
-            "测试时间",
-            "这是一条测试通知，用于验证邮件服务是否正常工作。"
+            "Test Time",
+            "This is a test notification to verify email service functionality."
         )
         
-        # 获取最新的健康建议
+        # Get latest health advice
         advice = get_latest_advice()
         if advice:
-            logger.info("测试发送健康建议...")
+            logger.info("Testing health advice email...")
             email_service.send_daily_summary(advice)
         else:
-            logger.warning("未找到健康建议数据")
+            logger.warning("No health advice data found")
             
-        logger.info("邮件服务测试完成")
+        logger.info("Email service test completed")
         
     except Exception as e:
-        logger.error(f"测试失败: {str(e)}")
+        logger.error(f"Test failed: {str(e)}")
         raise
 
 if __name__ == "__main__":

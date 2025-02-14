@@ -23,7 +23,7 @@ A health monitoring system based on Zepp(Mi Fit) data, providing data collection
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/health-monitor.git
+git clone https://github.com/RBZhu5900/health-monitor.git
 cd health-monitor
 ```
 
