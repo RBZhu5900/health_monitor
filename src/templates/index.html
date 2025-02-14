@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小米运动健康监控</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #1890ff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #40a9ff;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .success-message {
+            color: green;
+            margin-top: 10px;
+        }
+        .loading {
+            color: #666;
+            margin-top: 10px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section-title {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2 class="section-title">账号设置</h2>
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+            <div class="form-group">
+                <label for="username">账号:</label>
+                <input type="text" id="username" value="{{ username }}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" value="{{ password }}" readonly>
+            </div>
+            <button id="editBtn" onclick="toggleEdit()">修改</button>
+            <button id="saveBtn" onclick="saveCredentials()" class="hidden">保存</button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="hidden">取消</button>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">邮箱设置</h2>
+            <div class="form-group">
+                <label for="receiverEmail">接收邮箱:</label>
+                <input type="email" id="receiverEmail" value="{{ receiver_email }}" readonly>
+            </div>
+            <button id="editEmailBtn" onclick="toggleEmailEdit()">修改</button>
+            <button id="saveEmailBtn" onclick="saveEmail()" class="hidden">保存</button>
+            <button id="cancelEmailBtn" onclick="cancelEmailEdit()" class="hidden">取消</button>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">健康数据</h2>
+            <div class="button-group">
+                <button onclick="getHealthData()">获取健康数据</button>
+                <button onclick="downloadReport()">下载报告</button>
+            </div>
+        </div>
+        
+        <div id="message" class="hidden"></div>
+        <div id="loading" class="loading hidden">正在处理中...</div>
+    </div>
+
+    <script>
+        let originalUsername = "{{ username }}";
+        let originalPassword = "{{ password }}";
+        let originalEmail = "{{ receiver_email }}";
+        
+        function toggleEdit() {
+            document.getElementById('username').readOnly = false;
+            document.getElementById('password').readOnly = false;
+            document.getElementById('password').value = '';
+            document.getElementById('editBtn').classList.add('hidden');
+            document.getElementById('saveBtn').classList.remove('hidden');
+            document.getElementById('cancelBtn').classList.remove('hidden');
+        }
+        
+        function cancelEdit() {
+            document.getElementById('username').readOnly = true;
+            document.getElementById('password').readOnly = true;
+            document.getElementById('username').value = originalUsername;
+            document.getElementById('password').value = originalPassword;
+            document.getElementById('editBtn').classList.remove('hidden');
+            document.getElementById('saveBtn').classList.add('hidden');
+            document.getElementById('cancelBtn').classList.add('hidden');
+            document.getElementById('message').classList.add('hidden');
+        }
+        
+        function saveCredentials() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showMessage('用户名和密码不能为空', 'error');
+                return;
+            }
+            
+            fetch('/update_credentials', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    originalUsername = username;
+                    originalPassword = '*'.repeat(password.length);
+                    document.getElementById('username').readOnly = true;
+                    document.getElementById('password').readOnly = true;
+                    document.getElementById('password').value = originalPassword;
+                    document.getElementById('editBtn').classList.remove('hidden');
+                    document.getElementById('saveBtn').classList.add('hidden');
+                    document.getElementById('cancelBtn').classList.add('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('保存失败: ' + error, 'error');
+            });
+        }
+        
+        function getHealthData() {
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.classList.remove('hidden');
+            showMessage('正在获取健康数据...', 'loading');
+            
+            fetch('/get_health_data')
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.classList.add('hidden');
+                    if (data.success === false) {
+                        showMessage(data.message, 'error');
+                    } else {
+                        showMessage('健康数据获取成功！', 'success');
+                    }
+                })
+                .catch(error => {
+                    loadingDiv.classList.add('hidden');
+                    showMessage('获取数据失败: ' + error, 'error');
+                });
+        }
+        
+        function downloadReport() {
+            console.log('开始下载报告...');
+            // 创建一个隐藏的 iframe 来处理下载
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = '/download_report';
+            document.body.appendChild(iframe);
+            
+            // 3秒后移除 iframe
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 3000);
+            
+            showMessage('报告下载成功！', 'success');
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = type;
+            messageDiv.classList.remove('hidden');
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    messageDiv.classList.add('hidden');
+                }, 3000);
+            }
+        }
+        
+        function toggleEmailEdit() {
+            document.getElementById('receiverEmail').readOnly = false;
+            document.getElementById('editEmailBtn').classList.add('hidden');
+            document.getElementById('saveEmailBtn').classList.remove('hidden');
+            document.getElementById('cancelEmailBtn').classList.remove('hidden');
+        }
+        
+        function cancelEmailEdit() {
+            document.getElementById('receiverEmail').readOnly = true;
+            document.getElementById('receiverEmail').value = originalEmail;
+            document.getElementById('editEmailBtn').classList.remove('hidden');
+            document.getElementById('saveEmailBtn').classList.add('hidden');
+            document.getElementById('cancelEmailBtn').classList.add('hidden');
+            document.getElementById('message').classList.add('hidden');
+        }
+        
+        function saveEmail() {
+            const email = document.getElementById('receiverEmail').value;
+            
+            if (!email) {
+                showMessage('邮箱不能为空', 'error');
+                return;
+            }
+            
+            // 简单的邮箱格式验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('请输入有效的邮箱地址', 'error');
+                return;
+            }
+            
+            fetch('/update_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    originalEmail = email;
+                    document.getElementById('receiverEmail').readOnly = true;
+                    document.getElementById('editEmailBtn').classList.remove('hidden');
+                    document.getElementById('saveEmailBtn').classList.add('hidden');
+                    document.getElementById('cancelEmailBtn').classList.add('hidden');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('保存失败: ' + error, 'error');
+            });
+        }
+    </script>
+</body>
+</html> 
