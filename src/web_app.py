@@ -6,13 +6,12 @@ from services.mi_fit_service import MiFitService
 import os
 from flask_cors import CORS
 from services.health_advisor_service import HealthAdvisorService
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 def create_app():
     """Create Flask application"""
     app = Flask(__name__)
     CORS(app)
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
+    app.config['PREFERRED_URL_SCHEME'] = 'http'  # Force HTTP
     
     def setup_logging():
         logging.basicConfig(
@@ -23,13 +22,6 @@ def create_app():
                 logging.StreamHandler()
             ]
         )
-
-    @app.before_request
-    def before_request():
-        # 如果不是 HTTPS，重定向到 HTTPS
-        if not request.is_secure and not request.headers.get('X-Forwarded-Proto', 'http') == 'https':
-            url = request.url.replace('http://', 'https://', 1)
-            return redirect(url, code=301)
 
     @app.route('/')
     def index():

@@ -156,9 +156,15 @@ health_monitor/
    - Review logs for detailed error information
 
 2. Data Collection Failure
+
    - Verify Xiaomi/Huami account credentials
    - Check network connectivity
    - Review logs for detailed error information
+
+3. HTTPS Connection Issues
+   - Application runs on HTTP only (port 5050)
+   - HTTPS should be handled by reverse proxy (e.g., Nginx)
+   - Check reverse proxy configuration if using HTTPS
 
 ## License
 

@@ -37,7 +37,7 @@ def start_web():
     """Start web service"""
     try:
         app = create_app()
-        app.run(debug=False, port=5050, host='0.0.0.0')
+        app.run(host='0.0.0.0', port=5050, ssl_context=None)  # NO SSL
     except Exception as e:
         logging.error(f"Web service error: {str(e)}")
 

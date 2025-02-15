@@ -12,6 +12,8 @@ class MiFitService:
         self.config_path = Path(__file__).parent.parent.parent / "data" / "config.json"
         self.user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/7.0.12(0x17000c2d) NetType/WIFI Language/zh_CN"
         self.session = requests.Session()
+        if proxies:
+            self.session.proxies = proxies
         self.proxies = proxies
         self._load_config()
 

@@ -166,8 +166,28 @@ class HealthAdvisorService:
             date_str = datetime.now().strftime("%Y%m%d")
             filename = advice_dir / f"health_advice_{date_str}.txt"
             
+            # Parse advice JSON
+            advice = json.loads(advice_json)
+            
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write("=== Health Advice ===\n\n")
+                f.write("Daily Reminders:\n")
+                for notification in advice["notifications"]:
+                    f.write(f"[{notification['time']}] {notification['message']}\n")
+                
+                f.write("\nDaily Summary:\n")
+                f.write(advice["daily_summary"])
+                
+                f.write("\n\nImprovement Suggestions:\n")
+                for suggestion in advice["improvement_suggestions"]:
+                    f.write(f"- {suggestion}\n")
+                
+                f.write("\nAchievements:\n")
+                for achievement in advice["achievements"]:
+                    f.write(f"- {achievement}\n")
+                
+                f.write("\n\n=== Raw Data ===\n")
+                f.write(advice_json)
                 
             self.logger.info(f"Health advice saved to: {filename}")
             
