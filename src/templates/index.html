@@ -158,7 +158,7 @@
                 return;
             }
             
-            fetch('/update_credentials', {
+            fetch('update_credentials', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -194,7 +194,7 @@
             loadingDiv.classList.remove('hidden');
             showMessage('Retrieving health data...', 'loading');
             
-            fetch('/get_health_data')
+            fetch('get_health_data')
                 .then(response => response.json())
                 .then(data => {
                     loadingDiv.classList.add('hidden');
@@ -215,7 +215,7 @@
             // 创建一个隐藏的 iframe 来处理下载
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
-            iframe.src = '/download_report';
+            iframe.src = 'download_report';
             document.body.appendChild(iframe);
             
             // 3秒后移除 iframe
@@ -269,7 +269,7 @@
                 return;
             }
             
-            fetch('/update_email', {
+            fetch('update_email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
