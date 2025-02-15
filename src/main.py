@@ -1,5 +1,5 @@
 import logging
-from services.mi_sport_service import MiSportService
+from services.mi_fit_service import MiFitService
 from services.health_advisor_service import HealthAdvisorService
 from services.scheduler_service import SchedulerService
 from pathlib import Path
@@ -7,6 +7,8 @@ import json
 from datetime import datetime
 import signal
 import sys
+from apscheduler.schedulers.background import BackgroundScheduler
+from services.email_service import EmailService
 
 def setup_logging():
     logging.basicConfig(
@@ -36,6 +38,15 @@ def get_latest_health_data():
         logging.error(f"Failed to read health data: {str(e)}")
         return None
 
+def send_notification(time, message):
+    """Send notification email"""
+    try:
+        email_service = EmailService()
+        email_service.send_notification(time, message)
+        logger.info(f"Sent notification for {time}: {message}")
+    except Exception as e:
+        logger.error(f"Failed to send notification: {str(e)}")
+
 def health_monitor_task():
     """Health monitoring task"""
     logger = logging.getLogger(__name__)
@@ -44,14 +55,12 @@ def health_monitor_task():
         logger.info("Starting health monitoring process")
         
         # 1. Get health data
-        service = MiSportService()
+        service = MiFitService()
         health_data = service.get_health_data()
         logger.info("Successfully retrieved health data")
         
         # 2. Get health advice
         advisor = HealthAdvisorService()
-        
-        # Read detailed health data from file
         detailed_data = get_latest_health_data()
         if detailed_data:
             combined_data = {
@@ -64,34 +73,21 @@ def health_monitor_task():
         advice = advisor.get_health_advice(combined_data)
         logger.info("Successfully generated health advice")
         
-        # Add notification email tasks
-        scheduler.add_notification_jobs(advice["notifications"])
+        # Schedule notification emails
+        for notification in advice.get("notifications", []):
+            scheduler.add_job(
+                send_notification,
+                'cron',
+                hour=notification['time'].split(':')[0],
+                minute=notification['time'].split(':')[1],
+                args=[notification['time'], notification['message']],
+                id=f'notification_{notification["time"].replace(":", "_")}',
+                replace_existing=True
+            )
         
-        # 3. Save advice to text file
-        data_dir = Path("data_export")
-        advice_file = data_dir / f"health_advice_{datetime.now().strftime('%Y%m%d')}.txt"
-        
-        with open(advice_file, 'w', encoding='utf-8') as f:
-            f.write("=== Health Advice ===\n\n")
-            f.write("Daily Reminders:\n")
-            for notification in advice["notifications"]:
-                f.write(f"[{notification['time']}] {notification['message']}\n")
-            
-            f.write("\nDaily Summary:\n")
-            f.write(advice["daily_summary"])
-            
-            f.write("\n\nImprovement Suggestions:\n")
-            for suggestion in advice["improvement_suggestions"]:
-                f.write(f"- {suggestion}\n")
-            
-            f.write("\nAchievements:\n")
-            for achievement in advice["achievements"]:
-                f.write(f"- {achievement}\n")
-            
-            f.write("\n\n=== Raw Data ===\n")
-            f.write(json.dumps(advice, ensure_ascii=False, indent=2))
-            
-        logger.info(f"Health advice saved to: {advice_file}")
+        # 3. Save advice using advisor service
+        advisor._save_advice(json.dumps(advice, ensure_ascii=False, indent=2))
+        logger.info("Health advice saved")
         
     except Exception as e:
         logger.error(f"Task execution failed: {str(e)}")
@@ -115,7 +111,13 @@ def run_monitor(daemon=False):
         
         # Create and start scheduler
         global scheduler
-        scheduler = SchedulerService(health_monitor_task)
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(
+            health_monitor_task,
+            'cron',
+            hour=3,
+            kwargs={}  # 明确指定不传入额外参数
+        )
         scheduler.start()
         
         # Execute task immediately

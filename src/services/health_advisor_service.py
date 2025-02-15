@@ -159,11 +159,15 @@ class HealthAdvisorService:
             advice_dir = Path("data_export/advice")
             advice_dir.mkdir(exist_ok=True, parents=True)
             
+            # Clean up old files
+            for old_file in advice_dir.glob("health_advice_*.txt"):
+                old_file.unlink()
+            
             date_str = datetime.now().strftime("%Y%m%d")
-            filename = advice_dir / f"health_advice_{date_str}.json"
+            filename = advice_dir / f"health_advice_{date_str}.txt"
             
             with open(filename, 'w', encoding='utf-8') as f:
-                f.write(advice_json)
+                f.write("=== Health Advice ===\n\n")
                 
             self.logger.info(f"Health advice saved to: {filename}")
             

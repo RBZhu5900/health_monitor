@@ -1,16 +1,18 @@
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, render_template, jsonify, request, send_from_directory, redirect
 import json
 from pathlib import Path
 import logging
-from services.mi_sport_service import MiSportService
+from services.mi_fit_service import MiFitService
 import os
 from flask_cors import CORS
 from services.health_advisor_service import HealthAdvisorService
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 def create_app():
     """Create Flask application"""
     app = Flask(__name__)
     CORS(app)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
     
     def setup_logging():
         logging.basicConfig(
@@ -21,6 +23,13 @@ def create_app():
                 logging.StreamHandler()
             ]
         )
+
+    @app.before_request
+    def before_request():
+        # 如果不是 HTTPS，重定向到 HTTPS
+        if not request.is_secure and not request.headers.get('X-Forwarded-Proto', 'http') == 'https':
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
 
     @app.route('/')
     def index():
@@ -59,7 +68,7 @@ def create_app():
     @app.route('/get_health_data')
     def get_health_data():
         try:
-            service = MiSportService()
+            service = MiFitService()
             data = service.get_health_data()
             return jsonify(data)
         except Exception as e:
@@ -109,7 +118,7 @@ def create_app():
     def get_health_advice():
         try:
             # Get health data
-            service = MiSportService()
+            service = MiFitService()
             health_data = service.get_health_data()
             
             # Get health advice

@@ -5,13 +5,15 @@ from pathlib import Path
 import base64
 from datetime import datetime, timedelta
 
-class MiSportService:
-    def __init__(self):
+class MiFitService:
+    """Service for interacting with Zepp(Mi Fit) API"""
+    def __init__(self, proxies=None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config_path = Path(__file__).parent.parent.parent / "data" / "config.json"
         self.user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/7.0.12(0x17000c2d) NetType/WIFI Language/zh_CN"
-        self._load_config()
         self.session = requests.Session()
+        self.proxies = proxies
+        self._load_config()
 
     def _load_config(self):
         """Load user credentials from config file"""
@@ -40,7 +42,7 @@ class MiSportService:
             "token": "access"
         }
         
-        url = f"https://api-user.huami.com/registrations/+86{self.username}/tokens"
+        url = f"https://api-user.huami.com/registrations/{self.username}/tokens"
         
         try:
             # No need for GET request first, directly send POST request
@@ -48,7 +50,8 @@ class MiSportService:
                 url,
                 headers=headers,
                 data=data,
-                allow_redirects=False  # Don't follow redirects automatically
+                allow_redirects=False,  # Don't follow redirects automatically
+                proxies=self.proxies
             )
             
             self.logger.debug(f"Response status code: {response.status_code}")

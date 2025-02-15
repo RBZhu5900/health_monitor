@@ -1,33 +1,46 @@
-# Use Python 3.9 as base image
-FROM python:3.9-slim
+# Use Python 3.11 as base image
+FROM python:3.11-slim
+
+# Set non-root user
+RUN useradd -m -r -u 1000 appuser
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/home/appuser/.local/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         gcc \
         python3-dev \
+        build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
+# Install Python dependencies
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code and example config
 COPY src/ src/
 COPY data/config.example.json data/config.json
 
-# Create necessary directories
-RUN mkdir -p logs data_export
+# Create necessary directories and set permissions
+RUN mkdir -p logs data_export \
+    && chown -R appuser:appuser /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Switch to non-root user
+USER appuser
 
-# Expose port
+# HTTP service port
 EXPOSE 5050
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5050/ || exit 1
 
 # Start application
 CMD ["python", "src/app.py"] 

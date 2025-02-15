@@ -81,8 +81,8 @@ The `config.json` file contains the following settings:
 
 ```json
 {
-  "username": "your_username", // Xiaomi Sport account
-  "password": "your_password", // Xiaomi Sport password
+  "username": "your_username", // Zepp(Mi Fit) account (include country code if using phone number, e.g. +8612345678901)
+  "password": "your_password", // Zepp(Mi Fit) password
   "deepseek": {
     "api_key": "your_api_key", // DeepSeek API key
     "base_url": "your_deepseek_api_base_url", // DeepSeek API base URL
@@ -156,7 +156,7 @@ health_monitor/
    - Review logs for detailed error information
 
 2. Data Collection Failure
-   - Verify Xiaomi account credentials
+   - Verify Xiaomi/Huami account credentials
    - Check network connectivity
    - Review logs for detailed error information
 
