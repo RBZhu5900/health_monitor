@@ -2,6 +2,6 @@ flask==3.0.2
 flask-cors==4.0.0
 werkzeug==3.0.1
 requests==2.31.0
-openai==1.12.0
+openai==1.63.0
 apscheduler==3.10.4
 python-dotenv==1.0.1 
