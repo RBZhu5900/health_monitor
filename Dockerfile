@@ -1,6 +1,10 @@
 # Use Python 3.11 as base image
 FROM python:3.11-slim
 
+# Set timezone
+ENV TZ=Asia/Hong_Kong
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Set non-root user
 RUN useradd -m -r -u 1000 appuser
 

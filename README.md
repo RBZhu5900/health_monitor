@@ -162,9 +162,20 @@ health_monitor/
    - Review logs for detailed error information
 
 3. HTTPS Connection Issues
+
    - Application runs on HTTP only (port 5050)
    - HTTPS should be handled by reverse proxy (e.g., Nginx)
    - Check reverse proxy configuration if using HTTPS
+
+4. Timezone Issues
+   - Application uses system timezone for scheduling
+   - Docker container is configured to use Asia/Shanghai timezone
+   - If deploying in a different timezone, modify TZ in Dockerfile:
+     ```dockerfile
+     ENV TZ=Asia/Hong_Kong  # Example for Hong Kong
+     # Use standard IANA timezone names (e.g., Asia/Tokyo, Asia/Singapore)
+     # Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+     ```
 
 ## License
 
