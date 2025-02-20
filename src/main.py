@@ -10,6 +10,8 @@ import sys
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.email_service import EmailService
 
+logger = logging.getLogger(__name__)
+
 def setup_logging():
     logging.basicConfig(
         level=logging.DEBUG,
